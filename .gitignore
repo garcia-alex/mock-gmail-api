@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.env
+
+# Sample fixtures.sqlite at the repo root IS committed intentionally (see
+# README) so `make serve` works with zero setup. Only ignore fixture DBs
+# generated elsewhere (e.g. by tests or ad-hoc `generate --db` runs).
+/*.db
+!/fixtures.sqlite
+
+# mock_gmail_api.docgen's disk cache of generated attachment content
+# (pdf/docx/xlsx bytes) — regenerable, keyed by content hash, not source.
+.docgen_cache/

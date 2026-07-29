@@ -1,0 +1,24 @@
+# Example standalone service block for running mock-gmail-api in a stack
+# alongside your own dev-server services. If you have no existing compose
+# file yet, copy this block into one rather than expecting `docker
+# compose up` to work directly from this repo.
+services:
+  mock-gmail-api:
+    build: .
+    image: mock-gmail-api:latest
+    ports:
+      - "8000:8000"
+    environment:
+      MOCK_GMAIL_DEV_TOKEN: dev-secret-token
+      MOCK_GMAIL_FAULTS: none
+      MOCK_GMAIL_FAULT_CHANCE: "0.05"
+      MOCK_GMAIL_SEED: "42"
+      # 'live' (default) shells out to `claude -p` and needs credentials in
+      # the container; 'stub' fabricates content with Faker only. See the
+      # README's "Attachment content generation" section.
+      MOCK_GMAIL_DOCGEN_BACKEND: live
+    volumes:
+      - mock-gmail-fixtures:/data
+
+volumes:
+  mock-gmail-fixtures:
