@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import uvicorn
@@ -31,12 +32,21 @@ def _cmd_generate(args: argparse.Namespace) -> int:
     docgen_cache = DocumentCache(
         cache_dir=Path(args.docgen_cache_dir), backend=get_backend(args.docgen_backend)
     )
-    config = GenerateConfig(
-        seed=args.seed,
-        volume=args.volume,
-        pitch_ratio=args.pitch_ratio,
-        docgen_cache=docgen_cache,
-    )
+    if args.reference_time is not None:
+        config = GenerateConfig(
+            seed=args.seed,
+            volume=args.volume,
+            pitch_ratio=args.pitch_ratio,
+            reference_time=datetime.fromisoformat(args.reference_time.replace("Z", "+00:00")),
+            docgen_cache=docgen_cache,
+        )
+    else:
+        config = GenerateConfig(
+            seed=args.seed,
+            volume=args.volume,
+            pitch_ratio=args.pitch_ratio,
+            docgen_cache=docgen_cache,
+        )
     if args.if_missing:
         ran = generate_if_missing(config, args.db)
         if not ran:
@@ -73,6 +83,13 @@ def build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--seed", type=int, default=int(os.environ.get("MOCK_GMAIL_SEED", "42")))
     gen.add_argument("--volume", type=int, default=200, help="approx. total messages generated")
     gen.add_argument("--pitch-ratio", type=float, default=0.3)
+    gen.add_argument(
+        "--reference-time",
+        default=os.environ.get("MOCK_GMAIL_REFERENCE_TIME"),
+        help="ISO8601 UTC timestamp messages are dated relative to (e.g. "
+        "2026-08-04T12:00:00Z); omit to use the fixed default anchor "
+        "(byte-identical fixtures across runs for the same seed)",
+    )
     gen.add_argument("--db", default=os.environ.get("MOCK_GMAIL_DB", "./fixtures.sqlite"))
     gen.add_argument(
         "--if-missing",
