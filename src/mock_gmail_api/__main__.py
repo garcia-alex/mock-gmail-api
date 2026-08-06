@@ -70,6 +70,7 @@ def _cmd_serve(args: argparse.Namespace) -> int:
         fault_profile=fault_profile,
         dev_token=args.dev_token,
         docgen_cache_dir=args.docgen_cache_dir,
+        docgen_backend=args.docgen_backend,
     )
     uvicorn.run(app, host=args.host, port=args.port)
     return 0
@@ -133,6 +134,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--docgen-cache-dir",
         default=str(default_cache_dir()),
         help="directory generated attachment content is read from",
+    )
+    serve.add_argument(
+        "--docgen-backend",
+        default=os.environ.get("MOCK_GMAIL_DOCGEN_BACKEND", "live"),
+        choices=["live", "stub"],
+        help="backend used to generate new attachment content for "
+        "POST /admin/messages; 'live' calls `claude -p`, 'stub' uses Faker only",
     )
     serve.set_defaults(func=_cmd_serve)
 

@@ -125,6 +125,44 @@ per-account REST paths. `GET /health` is separate and unauthenticated.
 - `GET /messages/{id}/attachments/{attachmentId}` — generated attachment
   bytes (see [Attachment content generation](#attachment-content-generation))
 
+## Admin endpoint
+
+`POST /admin/messages` inserts exactly one new message into the running
+fixture db — no container recreate, no regen of existing messages — so a
+caller can inject a single realistic new email without wiping/regenerating
+the fixture set. Mirrors mock-granola-api's `POST /admin/notes`: exact
+content, not Faker-randomized. **Append-only, not idempotent** — repeated
+calls with an identical body each create a new message with a new id, same
+as `/admin/notes`.
+
+Unlike the `/gmail/v1/...` routes, this endpoint requires no bearer token.
+
+```json
+{
+  "subject": "Acme Robotics — Seed pitch",
+  "body_text": "Hi, we're raising a seed round...",
+  "from_addr": "founder@acmerobotics.example",
+  "to_addrs": ["pitches@acme.example"],
+  "pitch_meta": {
+    "company_name": "Acme Robotics",
+    "sector": "Robotics",
+    "ask": "£1.2m",
+    "stage": "Seed"
+  },
+  "attachments": [{"doc_type": "pitch_deck"}]
+}
+```
+
+- `to_addrs` defaults to `["pitches@acme.example"]`; `label_ids` defaults to
+  `["INBOX", "UNREAD"]`, plus `PITCH-INBOUND` when `pitch_meta` is set.
+- `attachments[].doc_type` is one of `pitch_deck`, `one_pager`, `cap_table`
+  and requires `pitch_meta` — content is generated through the same
+  `docgen` live/stub backend and hash-based cache `generate` uses (see
+  [Attachment content generation](#attachment-content-generation)), keyed
+  by `MOCK_GMAIL_DOCGEN_BACKEND`/`--docgen-backend` on `serve`.
+- The response is the created message in the same shape as
+  `GET /messages/{id}`.
+
 ## Calling it from Python
 
 ### Minimal `requests` example

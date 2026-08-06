@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from faker import Faker
 
 from mock_gmail_api.docgen import CAP_TABLE, ONE_PAGER, PITCH_DECK, DocumentCache
-from mock_gmail_api.generator import new_id
+from mock_gmail_api.generator import new_id, slugify_company_name
 from mock_gmail_api.models import Attachment, Message, PitchMeta, Thread
 
 SECTORS = [
@@ -38,10 +38,6 @@ _STAGE_ASKS = {
 }
 
 PITCH_LABEL = "PITCH-INBOUND"
-
-
-def _slug(company_name: str) -> str:
-    return "".join(ch if ch.isalnum() else "_" for ch in company_name).strip("_")
 
 
 def _epoch_ms(dt: datetime) -> int:
@@ -116,7 +112,7 @@ def make_pitch_thread(
     stage = fake.random_element(STAGES)
     ask = fake.random_element(_STAGE_ASKS[stage])
     founder = fake.name()
-    company_slug = _slug(company_name)
+    company_slug = slugify_company_name(company_name)
     company_domain = f"{company_slug.lower()}.com"
     founder_email = f"{founder.split()[0].lower()}@{company_domain}"
 

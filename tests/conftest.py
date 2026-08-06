@@ -39,6 +39,9 @@ def client(fixture_db: Path, docgen_cache_dir: Path) -> Iterator[TestClient]:
         fault_profile=FaultProfile.none(),
         dev_token=DEV_TOKEN,
         docgen_cache_dir=docgen_cache_dir,
+        # Never the live `claude -p` backend in tests — see docgen/content.py's
+        # module docstring.
+        docgen_backend="stub",
     )
     with TestClient(app) as test_client:
         test_client.headers["Authorization"] = f"Bearer {DEV_TOKEN}"
