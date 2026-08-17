@@ -257,18 +257,14 @@ make docker-build
 make docker-run
 ```
 
-The image bakes in both the generator and server. Its entrypoint always
-runs `generate --if-missing` before `serve`, so the same image works
-whether or not a fixture volume is mounted — a fresh container without a
-volume gets a freshly generated DB; one with a persisted `/data` volume
-keeps its existing fixtures across restarts.
-
-The entrypoint does not set `MOCK_GMAIL_DOCGEN_BACKEND`, so a fresh
-container defaults to the `live` backend and needs a working `claude` CLI
-+ credentials to generate its first fixture DB. Set
-`MOCK_GMAIL_DOCGEN_BACKEND=stub` in the container environment if that's not
-available (e.g. CI), or mount a `/data` volume pre-seeded by `make
-generate` on the host so `--if-missing` skips generation entirely.
+The image bakes in the server only; its entrypoint runs `serve` directly
+against `MOCK_GMAIL_DB` — a fresh container without a mounted volume starts
+with an empty inbox (schema is created lazily on first request), and one
+with a persisted `/data` volume keeps whatever fixtures were written to it
+across restarts. The image no longer auto-generates Faker fixture data on
+start; seed it deterministically instead via `POST /admin/messages` (see
+the Admin API section above), or mount a `/data` volume pre-populated by
+running `make generate` on the host beforehand if you want the Faker path.
 
 See [`docker-compose.example.yml`](docker-compose.example.yml) for a
 documented standalone service block (env vars, named volume) to copy into
