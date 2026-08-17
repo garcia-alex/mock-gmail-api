@@ -11,11 +11,12 @@ COPY README.md ./
 RUN uv sync --frozen --no-dev
 
 ENV MOCK_GMAIL_DB=/data/fixtures.sqlite
-ENV MOCK_GMAIL_SEED=42
 VOLUME /data
 EXPOSE 8000
 
-# Same image works whether or not a fixture volume is mounted:
-# `--if-missing` regenerates the fixture DB only if /data/fixtures.sqlite
-# isn't already there (e.g. from a persisted named volume), then serves it.
-ENTRYPOINT ["sh", "-c", "uv run mock-gmail-api generate --if-missing --seed \"$MOCK_GMAIL_SEED\" --db \"$MOCK_GMAIL_DB\" && uv run mock-gmail-api serve --host 0.0.0.0 --port 8000 --db \"$MOCK_GMAIL_DB\""]
+# No longer auto-seeds Faker fixture data on start (previously `generate
+# --if-missing`) -- callers seed deterministically via POST /admin/messages
+# instead (see README's Admin API section). `serve` works fine against a
+# missing/empty db: db.connect()/init_schema() create it and its schema
+# lazily on first request (server.py's get_conn dependency).
+ENTRYPOINT ["sh", "-c", "uv run mock-gmail-api serve --host 0.0.0.0 --port 8000 --db \"$MOCK_GMAIL_DB\""]
